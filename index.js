@@ -47,7 +47,9 @@ bot.command("my_profile", async (ctx) => {
 // Обрабатываем получение номера телефона
 bot.on("message:contact", async (ctx) => {
   const contact = ctx.message.contact;
-  await ctx.reply(`Спасибо! Ваш номер телефона: ${contact.phone_number}`);
+  await ctx.reply(`Спасибо! Ваш номер телефона: ${contact.phone_number}`, {
+    reply_markup: { remove_keyboard: true }
+  });
 });
 
 
