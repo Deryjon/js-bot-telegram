@@ -17,13 +17,8 @@ bot.command("start", async (ctx) => {
   );
 });
 
+
 bot.command("mood", async (ctx) => {
-//   const moodKeyboard = new Keyboard()
-//     .text("Well")
-//     .text("Bad")
-//     .text("Good")
-//     .resized()
-//     .oneTime();
 const moodLabels = ["Bad", "Well", "Good"];
 const rows = moodLabels.map((label) => {
     return [
@@ -60,9 +55,27 @@ bot.hears("ID", async (ctx) => {
 
 bot.command("my_profile", async (ctx) => {
   await ctx.reply(
-    `Ваш профиль \n\n🆔: ${ctx.from.id}\n👤: ${ctx.from.username || "Нет"}\n🔤: ${ctx.from.first_name}`,
+    `Ваш профиль \n\n🆔: ${ctx.from.id}\n👤: ${ctx.from.username || "Нет"}\n🔤: ${ctx.from.first_name}\n📞: Нету`,
   );
+
+  // Создаем клавиатуру с кнопкой для запроса номера телефона
+  const moodLabels = ["Отправить свой номер телефона"];
+  const rows = moodLabels.map((label) => {
+    return [
+      Keyboard.requestContact(label) // Используем requestContact для запроса номера телефона
+    ]
+  });
+
+  const phoneNumber = Keyboard.from(rows).resize();
+  await ctx.reply("Можете добавить свой номер телефона!", { reply_markup: phoneNumber });
 });
+
+// Обрабатываем получение номера телефона
+bot.on("message:contact", async (ctx) => {
+  const contact = ctx.message.contact;
+  await ctx.reply(`Спасибо! Ваш номер телефона: ${contact.phone_number}`);
+});
+
 
 bot.catch((err) => {
   const ctx = err.ctx;
