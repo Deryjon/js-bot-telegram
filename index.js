@@ -17,29 +17,6 @@ bot.command("start", async (ctx) => {
   );
 });
 
-
-bot.command("mood", async (ctx) => {
-const moodLabels = ["Bad", "Well", "Good"];
-const rows = moodLabels.map((label) => {
-    return [
-        Keyboard.text(label)
-    ]
-})
-const moodKeyboard2 = Keyboard.from(rows).resized()
-
-  await ctx.reply("How are you feeling today?", { reply_markup: moodKeyboard2 });
-});
-
-bot.hears("Well", async (ctx) => {
-  await ctx.reply("Good", {
-    reply_markup: {
-      remove_keyboard: true,
-    },
-  });
-});
-// reply_parameters: {
-//     message_id: ctx.msg.message_id,
-// }
 bot.hears("ID", async (ctx) => {
   await ctx.reply("Ваш ID: " + ctx.from.id);
 });
@@ -52,22 +29,19 @@ bot.hears("ID", async (ctx) => {
 // bot.on("message", async (ctx) => {
 //   await ctx.reply("Надо подумать....");
 // });
-
 bot.command("my_profile", async (ctx) => {
   await ctx.reply(
-    `Ваш профиль \n\n🆔: ${ctx.from.id}\n👤: ${ctx.from.username || "Нет"}\n🔤: ${ctx.from.first_name}\n📞: Нету`,
+    `Ваш профиль \n\n🆔: ${ctx.from.id}\n👤: ${ctx.from.username || "Нет"}\n🔤: ${ctx.from.first_name}\n📞: Нету`
   );
 
   // Создаем клавиатуру с кнопкой для запроса номера телефона
-  const moodLabels = ["Отправить свой номер телефона"];
-  const rows = moodLabels.map((label) => {
-    return [
-      Keyboard.requestContact(label) // Используем requestContact для запроса номера телефона
-    ]
-  });
+  const phoneKeyboard = new Keyboard()
+    .requestContact('Отправить свой номер телефона')
+    .resized();
 
-  const phoneNumber = Keyboard.from(rows).resize();
-  await ctx.reply("Можете добавить свой номер телефона!", { reply_markup: phoneNumber });
+  await ctx.reply("Можете добавить свой номер телефона!", {
+    reply_markup: { keyboard: phoneKeyboard.build() }
+  });
 });
 
 // Обрабатываем получение номера телефона
