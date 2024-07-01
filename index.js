@@ -7,7 +7,7 @@ const bot = new Bot(process.env.BOT_TOKEN);
 
 // Подключение к базе данных PostgreSQL
 const client = new Client({
-  connectionString: 'postgresql://postgres:CqmwWyTqQDahXiUpcQdCJDhxuwylXFBM@monorail.proxy.rlwy.net:35376/railway'
+  connectionString: process.env.DATABASE_URL // рекомендую использовать переменную окружения для хранения строки подключения
 });
 
 client.connect();
@@ -33,19 +33,31 @@ bot.hears("ID", async (ctx) => {
 
 bot.command("my_profile", async (ctx) => {
   const userId = ctx.from.id;
-  const username = ctx.from.username || "Нет";
-  const firstName = ctx.from.first_name;
 
-  // Сохранение или обновление данных пользователя в базе данных
-  const r = await client.query(
-    'INSERT INTO users (id, username) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET username = $2',
-    [userId, username]
+  // Получение данных пользователя из базы данных
+  const result = await client.query(
+    'SELECT * FROM users WHERE id = $1',
+    [userId]
   );
 
-  console.log(r);
+  let user;
+  if (result.rows.length > 0) {
+    user = result.rows[0];
+  } else {
+    // Если пользователь не найден, добавляем его в базу данных
+    const username = ctx.from.username || "Нет";
+    const firstName = ctx.from.first_name;
+
+    await client.query(
+      'INSERT INTO users (id, username, first_name) VALUES ($1, $2, $3)',
+      [userId, username, firstName]
+    );
+
+    user = { id: userId, username, first_name: firstName, phone_number: "Нету" };
+  }
 
   await ctx.reply(
-    `Ваш профиль \n\n🆔: ${userId}\n👤: ${username}\n🔤: ${firstName}\n📞: Нету`
+    `Ваш профиль \n\n🆔: ${user.id}\n👤: ${user.username}\n🔤: ${user.first_name}\n📞: ${user.phone_number || "Нету"}`
   );
 
   // Создаем клавиатуру с кнопкой для запроса номера телефона
@@ -73,7 +85,6 @@ bot.on("message:contact", async (ctx) => {
   });
 });
 
-// Обработка ошибок
 bot.catch((err) => {
   const ctx = err.ctx;
   console.error(`Error while handling update ${ctx.update.update_id}:`);
