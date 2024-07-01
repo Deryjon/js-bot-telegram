@@ -32,42 +32,34 @@ bot.hears("ID", async (ctx) => {
 });
 
 bot.command("my_profile", async (ctx) => {
-  try {
-    const userId = ctx.from.id;
+  const userId = ctx.from.id;
 
-    // Получение данных пользователя из базы данных
-    const result = await client.query(
-      'SELECT * FROM users WHERE id = $1',
-      [userId]
+  // Получение данных пользователя из базы данных
+  const result = await client.query(
+    'SELECT * FROM users WHERE id = $1',
+    [userId]
+    );
+    console.log(result)
+
+  let user;
+  if (result.rows.length > 0) {
+    user = result.rows[0];
+  } else {
+    // Если пользователь не найден, добавляем его в базу данных
+    const username = ctx.from.username || "Нет";
+    const firstName = ctx.from.first_name;
+
+    await client.query(
+      'INSERT INTO users (id, username, first_name) VALUES ($1, $2, $3)',
+      [userId, username, firstName]
     );
 
-    let user;
-    if (result.rows.length > 0) {
-      user = result.rows[0];
-    } else {
-      // Если пользователь не найден, добавляем его в базу данных
-      const username = ctx.from.username || "Нет";
-      const firstName = ctx.from.first_name;
-
-      await client.query(
-        'INSERT INTO users (id, username, first_name) VALUES ($1, $2, $3)',
-        [userId, username, firstName]
-      );
-
-      user = { id: userId, username, first_name: firstName, phone_number: "Нету" };
-
-      console.log("Пользователь добавлен в базу данных:", user);
-    }
-
-    await ctx.reply(
-      `Ваш профиль \n\n🆔: ${user.id}\n👤: ${user.username}\n🔤: ${user.first_name}\n📞: ${user.phone_number || "Нету"}`
-    );
-  } catch (error) {
-    console.error("Ошибка при выполнении команды my_profile:", error);
-    await ctx.reply("Произошла ошибка при получении вашего профиля. Пожалуйста, попробуйте позже.");
+    user = { id: userId, username, first_name: firstName, phone_number: "Нету" };
   }
-});
 
+  await ctx.reply(
+    `Ваш профиль \n\n🆔: ${user.id}\n👤: ${user.username}\n🔤: ${user.first_name}\n📞: ${user.phone_number || "Нету"}`
+  );
 
   // Создаем клавиатуру с кнопкой для запроса номера телефона
   const phoneKeyboard = new Keyboard()
@@ -76,6 +68,7 @@ bot.command("my_profile", async (ctx) => {
   await ctx.reply("Можете добавить свой номер телефона!", {
     reply_markup: { keyboard: phoneKeyboard.build() }
   });
+});
 
 // Обрабатываем получение номера телефона
 bot.on("message:contact", async (ctx) => {
